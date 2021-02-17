@@ -18,9 +18,9 @@ RUN tar --strip-components=1 -zxvf master.tar.gz
 RUN cd crates/lair_keystore && cargo install --path .
 
 FROM arm64v8/ubuntu
-COPY --from=build /usr/local/bin/holochain /usr/local/cargo/bin/holochain
+COPY --from=build /usr/local/cargo/bin/holochain /usr/local/bin/holochain
 #COPY --from=build /usr/local/cargo/bin/dna-util /usr/local/cargo/bin/dna-util
-COPY --from=build /usr/local/bin/lair-keystore /usr/local/cargo/bin/lair-keystore
+COPY --from=build /usr/local/cargo/bin/lair-keystore /usr/local/bin/lair-keystore
 #ENV PATH="/usr/local/cargo/bin:${PATH}"
 #RUN rustup target add wasm32-unknown-unknown
 
