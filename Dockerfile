@@ -1,29 +1,18 @@
 FROM arm64v8/rust as build
 
-RUN mkdir /holochain
+ARG REVISION=d3a61446acaa64b1732bc0ead5880fbc5f8e3f31
 
-WORKDIR /holochain
-ARG REVISION=develop
+RUN apt-get update && apt-get install build-essential
 
-ADD https://github.com/holochain/holochain/archive/$REVISION.tar.gz /holochain/$REVISION.tar.gz
-RUN tar --strip-components=1 -zxvf $REVISION.tar.gz
- 
-RUN cargo install --path crates/holochain
-#RUN cargo install --path crates/dna_util
+RUN cargo install --verbose --git https://github.com/holochain/holochain --rev ${REVISION} holochain
+RUN cargo install --git https://github.com/holochain/holochain --rev ${REVISION} holochain_cli
 
-RUN mkdir /lair
-WORKDIR /lair
-ADD https://github.com/holochain/lair/archive/master.tar.gz /lair/master.tar.gz
-RUN tar --strip-components=1 -zxvf master.tar.gz
-RUN cd crates/lair_keystore && cargo install --path .
+RUN cargo install --git https://github.com/holochain/lair --rev v0.0.1-alpha.10 lair_keystore --bin lair-keystore
 
 FROM arm64v8/ubuntu
 COPY --from=build /usr/local/cargo/bin/holochain /usr/local/bin/holochain
-#COPY --from=build /usr/local/cargo/bin/dna-util /usr/local/cargo/bin/dna-util
 COPY --from=build /usr/local/cargo/bin/lair-keystore /usr/local/bin/lair-keystore
-#ENV PATH="/usr/local/cargo/bin:${PATH}"
-#RUN rustup target add wasm32-unknown-unknown
+COPY --from=build /usr/local/cargo/bin/hc /usr/local/bin/hc
+ENV PATH="/usr/local/bin:${PATH}"
 
-RUN apt-get update && apt-get install curl -y
-RUN curl -sL https://deb.nodesource.com/setup_12.x | bash
-RUN apt-get install -y nodejs
+RUN apt-get update && apt-get install -y socat libssl-dev
